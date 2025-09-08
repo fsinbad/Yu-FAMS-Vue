@@ -2,14 +2,21 @@
   <div>
     <div class="operation">
       <el-button type="primary" plain @click="handleAdd">新增</el-button>
+	  <el-button type="success" plain 
+	               @click="syncDepartments" 
+	               :loading="isSyncing" 
+	               :disabled="isSyncing">同步部门</el-button>
     </div>
 
     <div class="table">
-      <el-table row-key="id" default-expand-all :data="tableData" strip>
-        <el-table-column prop="name" label="名称"></el-table-column>
-        <el-table-column prop="address" label="地址"></el-table-column>
+      <el-table :data="tableData" strip @selection-change="handleSelectionChange">
+	    <el-table-column type="selection" width="55" align="center"></el-table-column>
+		<el-table-column prop="id" label="部门ID" width="70"></el-table-column>
+        <el-table-column prop="name" label="部门名称"></el-table-column>
         <el-table-column prop="pid" label="父级ID"></el-table-column>
         <el-table-column prop="level" label="层级"></el-table-column>
+		<el-table-column prop="oaId" label="部门编号"></el-table-column>
+		
         <el-table-column label="操作" align="center" width="180"  v-if="user.role=='ADMIN'">
           <template v-slot="scope">
             <el-button size="mini" type="primary" plain @click="handleEdit(scope.row)">编辑</el-button>
@@ -17,6 +24,18 @@
           </template>
         </el-table-column>
       </el-table>
+	  
+      <div class="pagination">
+        <el-pagination
+            background
+            @current-change="handleCurrentChange"
+            :current-page="pageNum"
+            :page-sizes="[5, 10, 20]"
+            :page-size="pageSize"
+            layout="total, prev, pager, next"
+            :total="total">
+        </el-pagination>
+      </div>
     </div>
 
     <el-dialog title="部门信息" :visible.sync="fromVisible" width="40%" :close-on-click-modal="false" destroy-on-close>
@@ -41,8 +60,6 @@
         <el-button type="primary" @click="save">确 定</el-button>
       </div>
     </el-dialog>
-
-
   </div>
 </template>
 <script>
@@ -55,6 +72,7 @@ export default {
       pageSize: 10,  // 每页显示的个数
       total: 0,
       name: null,
+	   isSyncing: false,// 控制同步按钮的加载状态，默认为 false
       fromVisible: false,
       form: {},
       user: JSON.parse(localStorage.getItem('xm-user') || '{}'),
@@ -73,10 +91,37 @@ export default {
   },
   methods: {
     loadParent() {
-      this.$request.get('/department/selectParent').then(res => {
-        this.parent = res.data || []
+      this.$request.get('/department/selectPage').then(res => {
+        this.parent = res.data?.list || []
       })
     },
+	async syncDepartments() {
+		this.$confirm('此操作将从泛微OA同步部门信息，覆盖现有数据并新增不存在的部门，是否继续?', '提示', {
+		  confirmButtonText: '确定',
+		  cancelButtonText: '取消',
+		  type: 'warning'
+		}).then(async () => {
+		  this.isSyncing = true;
+		  try {
+			const res = await this.$request.get('/department/sync-from-oa');
+			
+			if (res.code === '200') {
+			  this.$message.success('部门信息同步成功！');
+			  this.load();
+			} else {
+			  this.$message.error(res.msg);
+			}
+		  } catch (err) {
+			this.$message.error(' 同步失败，请检查网络或后端服务 ');
+			console.error('同步请求出错:', err);
+		  } finally {
+			this.isSyncing = false;
+		  }
+		}).catch(() => {
+		  this.$message.info('已取消同步');
+		});
+	  },
+	
     handleAdd() {   // 新增数据
       this.form = {}  // 新增数据的时候清空数据
       this.fromVisible = true   // 打开弹窗
@@ -139,9 +184,16 @@ export default {
     },
     load(pageNum) {  // 分页查询
       if (pageNum) this.pageNum = pageNum
-      this.$request.get('/department/selectTree').then(res => {
+      this.$request.get('/department/selectPage', {
+        params: {
+          pageNum: this.pageNum,
+          pageSize: this.pageSize,
+          name: this.name,
+        }
+      }).then(res => {
         if (res.code === '200') {
-          this.tableData = res.data
+          this.tableData = res.data?.list || []
+          this.total = res.data?.total || 0
         } else {
           this.$message.error(res.msg)
         }

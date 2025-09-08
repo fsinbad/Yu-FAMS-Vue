@@ -83,7 +83,7 @@ export default {
 .container {
   height: 100vh;
   overflow: hidden;
-  background-image: url("../assets/imgs/bg1.png");
+  background-image: url("../assets/imgs/bg.webp");
   background-size: 100%;
   display: flex;
   align-items: center;

@@ -2,7 +2,7 @@
   <div class="dashboard-container">
     <!-- 欢迎卡片 -->
     <div class="welcome-card">
-      <div class="welcome-text">您好，{{ user?.name }}！欢迎使用固定资产管理系统</div>
+      <div class="welcome-text">您好，{{ user?.name }}！欢迎您使用本系统</div>
       <div class="current-date">{{ currentDate }}</div>
     </div>
 
@@ -80,7 +80,7 @@
       <div class="table-card">
         <div class="table-header">
           <div class="table-title">固定资产明细</div>
-          <el-button size="mini" type="primary" plain @click="$router.push('/asset')">查看更多</el-button>
+          <el-button size="mini" type="primary" plain @click="$router.push('/manager/assets')">查看更多</el-button>
         </div>
         <!-- 移除固定宽度，添加滚动容器 -->
         <div class="table-container">
@@ -112,7 +112,7 @@
       <div class="table-card">
         <div class="table-header">
           <div class="table-title">报修记录</div>
-          <el-button size="mini" type="primary" plain @click="$router.push('/repair')">查看更多</el-button>
+          <el-button size="mini" type="primary" plain @click="$router.push('/manager/assetsRepair')">查看更多</el-button>
         </div>
         <!-- 移除固定宽度，添加滚动容器 -->
         <div class="table-container">
@@ -278,6 +278,7 @@ export default {
       try {
         // 加载统计概览数据
         const statsRes = await this.$request.get('/dashboard/stats');
+        console.log('统计数据响应:', statsRes); // 添加这行调试代码
         if (statsRes.code === '200') {
           this.stats = statsRes.data;
         }
@@ -452,7 +453,7 @@ export default {
             },
             xAxis: {
               type: 'category',
-              data: res.data.labels
+              data: res.data.labels || []
             },
             yAxis: {
               type: 'value'
@@ -469,7 +470,7 @@ export default {
                     { offset: 1, color: '#188df0' }
                   ])
                 },
-                data: res.data.values
+                data: res.data.values || []
               }
             ]
           };
@@ -478,6 +479,42 @@ export default {
         }
       } catch (error) {
         console.error('加载盘点统计失败:', error);
+        // 如果没有数据，显示空图表
+        const option = {
+          tooltip: {
+            trigger: 'axis'
+          },
+          grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+          },
+          xAxis: {
+            type: 'category',
+            data: []
+          },
+          yAxis: {
+            type: 'value'
+          },
+          series: [
+            {
+              name: '盘点次数',
+              type: 'bar',
+              barWidth: '60%',
+              itemStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: '#83bff6' },
+                  { offset: 0.5, color: '#188df0' },
+                  { offset: 1, color: '#188df0' }
+                ])
+              },
+              data: []
+            }
+          ]
+        };
+        
+        this.inventoryChart.setOption(option);
       }
     },
     
@@ -696,6 +733,103 @@ export default {
   align-items: center;
   justify-content: center;
 }
+
+
+/* 新增样式 */
+.tables-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.table-card {
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-shrink: 0;
+}
+
+.table-scroll-wrapper {
+  overflow-x: auto;
+  flex-grow: 1;
+  border-radius: 6px;
+  border: 1px solid #EBEEF5;
+}
+
+/* 响应式处理 */
+@media (max-width: 1400px) {
+  .tables-row {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .charts-row {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .bottom-cards {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 1100px) {
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-row {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .table-header .el-button {
+    margin-top: 10px;
+    align-self: flex-end;
+  }
+}
+
+/* 表格视觉优化 */
+.el-table >>> .cell {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.el-table >>> th > .cell {
+  font-weight: 600;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: #C0C4CC;
+  border-radius: 4px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-track {
+  background: #F5F7FA;
+}
+
+
+
 </style>
 
 <style>

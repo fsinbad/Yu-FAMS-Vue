@@ -152,8 +152,10 @@
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-select style="width: 100%" v-model="form.status">
-            <el-option value="正常"></el-option>
-            <el-option value="停用"></el-option>
+            <el-option value="1.资本化"></el-option>
+			<el-option value="2.折旧中"></el-option>
+			<el-option value="3."></el-option>
+            <el-option value="4.折毕"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="备注" prop="comment">

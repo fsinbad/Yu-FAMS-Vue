@@ -9,6 +9,12 @@
     <div class="operation">
       <el-button type="primary" plain @click="handleAdd">新增</el-button>
       <el-button type="danger" plain @click="delBatch">批量删除</el-button>
+	  <el-button type="info" plain @click="exportData">批量导出</el-button>
+	  <!-- <el-button type="success" plain @click="syncStaff">同步OA人员信息</el-button> -->
+	   <el-button type="success" plain 
+	               @click="syncStaff" 
+	               :loading="isSyncing" 
+	               :disabled="isSyncing">同步OA人员信息</el-button>
     </div>
 
     <div class="table">
@@ -26,9 +32,12 @@
             ******** <!-- 密码不显示明文 -->
           </template>
         </el-table-column>
+		<el-table-column prop="departmentName" label="部门"></el-table-column>
         <el-table-column prop="name" label="姓名"></el-table-column>
         <el-table-column prop="phone" label="电话"></el-table-column>
         <el-table-column prop="email" label="邮箱"></el-table-column>
+		<el-table-column prop="workcode" label="工号"></el-table-column>
+		
         <el-table-column label="头像">
           <template v-slot="scope">
             <div style="display: flex; align-items: center">
@@ -122,6 +131,7 @@ export default {
       username: null,
       fromVisible: false,
       form: {},
+	  isSyncing: false,// 控制同步按钮的加载状态，默认为 false
       user: JSON.parse(localStorage.getItem('xm-user') || '{}'),
       rules: {
         username: [
@@ -137,7 +147,74 @@ export default {
   methods: {
     formatRole(role) {
       return role === 'ADMIN' ? '管理员' : '普通员工';
-    },
+    },//同步OA人员信息按钮的实现方法
+	// syncStaff() {
+	//     // 弹出一个确认框，防止误操作
+	//     this.$confirm('此操作将从泛微OA同步人员信息，覆盖现有数据并新增不存在的人员，是否继续?', '提示', {
+	//       confirmButtonText: '确定',
+	//       cancelButtonText: '取消',
+	//       type: 'warning'
+	//     }).then(() => {
+	//       // 用户点击确定后，调用后端接口
+	//       this.$request.get('/staff/sync-from-oa').then(res => {
+	//         if (res.code === '200') {
+	//           // 同步成功，给出提示并刷新表格数据
+	//           this.$message.success('人员信息同步成功！');
+	//           this.load(); // 假设你有一个方法用于重新加载表格数据
+	//         } else {
+	//           // 同步失败，显示错误信息
+	//           this.$message.error(res.msg);
+	//         }
+	//       }).catch(err => {
+	//         // 请求失败，例如网络错误等
+	//         this.$message.error('同步失败，请检查网络或后端服务');
+	//         console.error('同步请求出错:', err);
+	//       });
+	//     }).catch(() => {
+	//       // 用户点击取消，不执行任何操作
+	//       this.$message.info('已取消同步');
+	//     });
+	//   },
+	
+	 async syncStaff() {
+	    this.$confirm('此操作将从泛微OA同步人员信息，是否继续?', '提示', {
+	      confirmButtonText: '确定',
+	      cancelButtonText: '取消',
+	      type: 'warning'
+	    }).then(async () => {
+	      // 用户点击确定后，开始同步
+	      this.isSyncing = true; // 1. 开启加载状态
+	      
+	      try {
+	        // 2. 调用后端接口，使用 await 等待同步完成
+	        const res = await this.$request.get('/staff/sync-from-oa');
+	        
+	        if (res.code === '200') {
+	          // 3. 同步成功，给出提示并刷新表格
+	          this.$message.success('人员信息同步成功！');
+	          this.load(); 
+	        } else {
+	          // 4. 同步失败，显示错误信息
+	          this.$message.error(res.msg);
+	        }
+	      } catch (err) {
+	        // 5. 请求失败或发生异常
+	        this.$message.error('同步失败，请检查网络或后端服务');
+	        console.error('同步请求出错:', err);
+	      } finally {
+	        // 6. 无论成功或失败，最后都要关闭加载状态
+	        this.isSyncing = false;
+	      }
+	    }).catch(() => {
+	      // 用户点击取消
+	      this.$message.info('已取消同步');
+	    });
+	  },
+	
+	  // 假设这是你用于加载表格数据的方法
+	  // load() {
+	  //   // ...
+	  // }
     handleAdd() {   // 新增数据
       this.form = {
         role: 'STAFF',  // 默认角色设置为普通员工
@@ -220,6 +297,9 @@ export default {
         this.total = res.data?.total
       })
     },
+	exportData(){
+	  window.open(this.$baseUrl+'/staff/export')
+	},
     reset() {
       this.username = null
       this.load(1)

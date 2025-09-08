@@ -10,7 +10,8 @@
     </div>
 
     <div class="operation">
-      <el-button type="primary" plain @click="handleAdd" v-if="user.role === 'STAFF'">新增</el-button>
+      <!-- <el-button type="primary" plain @click="handleAdd" v-if="user.role === 'STAFF'">新增</el-button> -->
+	  <el-button type="primary" plain @click="handleAdd">新增</el-button>
       <el-button type="danger" plain @click="delBatch" v-if="user.role === 'ADMIN'">批量删除</el-button>
     </div>
 

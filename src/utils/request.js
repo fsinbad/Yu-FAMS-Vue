@@ -21,6 +21,7 @@ request.interceptors.request.use(config => {
     return Promise.reject(error)
 });
 
+// const Home = () => import(/* webpackChunkName: "home" */ './views/Home.vue');
 // response 拦截器
 // 可以在接口响应后统一处理结果
 request.interceptors.response.use(

@@ -43,7 +43,7 @@
             <el-button v-if="scope.row.status === '待审核'" size="mini" type="danger" plain @click="changeStatus(scope.row, '拒绝')">拒绝</el-button>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="100">
+        <el-table-column label="操作" align="center" width="100" v-if="user.role === 'ADMIN'">
           <template v-slot="scope">
             <el-button size="mini" type="danger" plain @click="del(scope.row.id)" v-if="scope.row.status !== '通过'">删除</el-button>
           </template>
